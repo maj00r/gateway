@@ -1,15 +1,29 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY tsconfig.json ./
+
+RUN npm install
+
+COPY src ./src
+
+RUN npm run build
+
 FROM node:20-alpine
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci --only=production
+RUN npm install --only=production
 
-COPY . .
+COPY --from=builder /app/dist ./dist
 
-RUN chown -R node:node /app
-USER node
+ENV NODE_ENV=production
+ENV PORT=3000
+
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["node", "dist/app.js"]
